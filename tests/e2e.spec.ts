@@ -96,9 +96,10 @@ test('390px footer links meet the touch target baseline and keyboard focus remai
 
 test('landing, paid dialog, and privacy remain accessible and private', async ({ page }) => {
   const externalRequests = new Set<string>()
+  const appOrigin = new URL(process.env.PLAYWRIGHT_BASE_URL ?? 'http://127.0.0.1:4173').origin
   page.on('request', (request) => {
     const url = new URL(request.url())
-    if (url.hostname !== '127.0.0.1') externalRequests.add(url.origin)
+    if (url.origin !== appOrigin) externalRequests.add(url.origin)
   })
 
   await page.goto('/')
