@@ -18,11 +18,13 @@ function openDb(demo = false): Promise<IDBDatabase> {
 export async function loadData(demo = false): Promise<AppData> {
   try {
     const db = await openDb(demo)
-    return await new Promise((resolve, reject) => {
-      const request = db.transaction(STORE).objectStore(STORE).get(KEY)
-      request.onsuccess = () => resolve((request.result as AppData | undefined) ?? emptyData())
-      request.onerror = () => reject(request.error)
-    })
+    try {
+      return await new Promise((resolve, reject) => {
+        const request = db.transaction(STORE).objectStore(STORE).get(KEY)
+        request.onsuccess = () => resolve((request.result as AppData | undefined) ?? emptyData())
+        request.onerror = () => reject(request.error)
+      })
+    } finally { db.close() }
   } catch {
     return emptyData()
   }
@@ -30,11 +32,13 @@ export async function loadData(demo = false): Promise<AppData> {
 
 export async function saveData(value: AppData, demo = false): Promise<void> {
   const db = await openDb(demo)
-  await new Promise<void>((resolve, reject) => {
-    const transaction = db.transaction(STORE, 'readwrite')
-    transaction.objectStore(STORE).put(value, KEY)
-    transaction.oncomplete = () => resolve()
-    transaction.onerror = () => reject(transaction.error)
-    transaction.onabort = () => reject(transaction.error)
-  })
+  try {
+    await new Promise<void>((resolve, reject) => {
+      const transaction = db.transaction(STORE, 'readwrite')
+      transaction.objectStore(STORE).put(value, KEY)
+      transaction.oncomplete = () => resolve()
+      transaction.onerror = () => reject(transaction.error)
+      transaction.onabort = () => reject(transaction.error)
+    })
+  } finally { db.close() }
 }
