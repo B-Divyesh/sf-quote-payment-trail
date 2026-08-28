@@ -39,6 +39,16 @@ function indexFor(headers: string[], field: string): number {
   return headers.findIndex((header) => aliases[field].includes(header.toLowerCase().trim()))
 }
 
+function isCalendarDate(value: string): boolean {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value)
+  if (!match) return false
+  const year = Number(match[1])
+  const month = Number(match[2])
+  const day = Number(match[3])
+  const parsed = new Date(Date.UTC(year, month - 1, day))
+  return parsed.getUTCFullYear() === year && parsed.getUTCMonth() === month - 1 && parsed.getUTCDate() === day
+}
+
 export function parseImport(input: string, sourceName: string, now = new Date().toISOString()): CsvResult {
   const rows = parseCsvRows(input.replace(/^\uFEFF/, ''))
   if (rows.length === 0) return { accepted: [], rejected: [{ row: 1, reason: 'The file is empty.', raw: '' }], headers: [] }
@@ -52,15 +62,15 @@ export function parseImport(input: string, sourceName: string, now = new Date().
     const rowNumber = offset + 2
     const rawType = (fields[idx.type] ?? '').toLowerCase().trim()
     const amountText = (fields[idx.amount] ?? '').replace(/[£$€,\s]/g, '').replace(/^\((.+)\)$/, '-$1')
-    const amount = Number(amountText)
-    const dateText = fields[idx.date] ?? ''
-    const date = /^\d{4}-\d{2}-\d{2}$/.test(dateText) && !Number.isNaN(Date.parse(`${dateText}T00:00:00Z`)) ? dateText : ''
+    const amount = amountText === '' ? Number.NaN : Number(amountText)
+    const dateText = (fields[idx.date] ?? '').trim()
+    const date = isCalendarDate(dateText) ? dateText : ''
     const reference = (fields[idx.reference] ?? '').trim()
     const reasons: string[] = []
     if (!recordTypes.includes(rawType as RecordType)) reasons.push('type must be quote, delivery, invoice, credit, or payment')
     if (!reference) reasons.push('reference is blank')
-    if (!date) reasons.push('date must use YYYY-MM-DD')
-    if (!Number.isFinite(amount) || amount < 0) reasons.push('amount must be zero or more')
+    if (!date) reasons.push('date must be a real calendar date in YYYY-MM-DD')
+    if (!Number.isFinite(amount) || amount < 0) reasons.push('amount must be a number that is zero or more')
     if (reasons.length) {
       rejected.push({ row: rowNumber, reason: reasons.join('; '), raw: fields.join(',') })
       return

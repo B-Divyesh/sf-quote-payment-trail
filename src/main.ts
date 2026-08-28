@@ -310,7 +310,10 @@ document.addEventListener('click', async (event) => {
   else if (action === 'load-example') await loadExample()
   else if (action === 'export-csv') exportCsv(activeCase()!)
   else if (action === 'export-json') download(`deal-thread-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json')
-  else if (action === 'print-casefile') premium ? printCasefile(activeCase()!) : payDialog()
+  else if (action === 'print-casefile') {
+    if (premium) printCasefile(activeCase()!)
+    else payDialog()
+  }
   else if (action === 'commit-import' && importResult) { const item = activeCase()!; item.records.push(...importResult.accepted); item.updatedAt = new Date().toISOString(); await persist(); closeDialog(); render(); announce(`${importResult.accepted.length} records imported. ${importResult.rejected.length} held back.`) }
   else if (action === 'download-rejected' && importResult) { download(`${importFileName.replace(/\.csv$/i, '')}-held-back.csv`, ['row,reason,source', ...importResult.rejected.map((issue) => [issue.row, issue.reason, issue.raw].map(csvEscape).join(','))].join('\n'), 'text/csv') }
   else if (action === 'delete-record') await deleteRecord(target.dataset.id!)

@@ -37,10 +37,12 @@ The static site is written to `dist/`, with `dist/index.html` at its root and ph
 
 ```sh
 npm test
+npm run lint
+npm run typecheck
 npm run test:e2e
 ```
 
-The browser suite pins Playwright 1.58.2 and checks the core create flow, serious/critical axe findings, persisted data, and an offline reload. The browser binaries are expected at `PLAYWRIGHT_BROWSERS_PATH` in the factory worker.
+The browser suite pins Playwright 1.58.2 and checks the core create/import flows, malformed financial rows, license trust, serious/critical axe findings, keyboard focus, 390 px touch targets, responsive overflow, privacy, persisted data, and an offline reload. The browser binaries are expected at `PLAYWRIGHT_BROWSERS_PATH` in the factory worker.
 
 ## CSV format
 
@@ -49,5 +51,7 @@ Required headers are `type`, `reference`, `date`, and `amount`. Optional headers
 ## Privacy and deployment
 
 Transaction data is stored on-device. There are no analytics, third-party scripts, or remote fonts. Only a pasted or checkout-returned license token is sent to the Sociobot verification API. Deploy the contents of `dist/` as a static site; no server environment variables are required.
+
+`public/staticwebapp.config.json` carries the production MIME, cache, CSP, permissions, and frame policies for Azure Static Web Apps.
 
 See [.factory/design.md](.factory/design.md) for the product-specific visual system and generated-art provenance.

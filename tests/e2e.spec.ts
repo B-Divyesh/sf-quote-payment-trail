@@ -21,7 +21,7 @@ test('previously loaded app and data work offline', async ({ page, context }) =>
   await page.goto('/')
   await page.waitForFunction(() => Boolean(navigator.serviceWorker?.controller))
   await page.waitForFunction(async () => {
-    const cache = await caches.open('deal-thread-shell-v3')
+    const cache = await caches.open('deal-thread-shell-v4')
     return (await cache.keys()).some((request) => request.url.endsWith('.js'))
   })
   await page.getByRole('button', { name: 'Try a sample' }).click()
@@ -47,4 +47,88 @@ test('imports good CSV rows while preserving malformed rows for review', async (
   await expect(page.getByText(/reference is blank/)).toBeVisible()
   await page.getByRole('button', { name: 'Import 1 records' }).click()
   await expect(page.getByRole('button', { name: /Edit Invoice INV-500/ })).toBeVisible()
+})
+
+test('holds the verifier blank amount and impossible date rows back', async ({ page }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Try a sample' }).click()
+  await page.getByRole('button', { name: 'Import CSV' }).click()
+  await page.locator('#csv-file').setInputFiles({
+    name: 'verifier-malformed.csv',
+    mimeType: 'text/csv',
+    buffer: Buffer.from('type,reference,date,amount,note,links\ninvoice,INV-BLANK,2026-08-30,,Blank amount,Q-100\ninvoice,INV-BADDATE,2026-02-30,10,Impossible date,Q-100'),
+  })
+  await expect(page.getByText('0 ready')).toBeVisible()
+  await expect(page.getByText('2 held back')).toBeVisible()
+  await page.getByText('Review held-back rows').click()
+  await expect(page.getByText(/amount must be a number/)).toBeVisible()
+  await expect(page.getByText(/real calendar date/)).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Import 0 records' })).toBeDisabled()
+})
+
+test('an arbitrary token cannot unlock PDF when verification fails offline or after reload', async ({ page, context }) => {
+  await page.goto('/')
+  await page.getByRole('button', { name: 'Try a sample' }).click()
+  await page.getByRole('button', { name: 'Unlock PDF casefile' }).click()
+  await page.getByLabel('Have a license token?').fill('arbitrary-offline-token')
+  await context.setOffline(true)
+  await page.getByRole('button', { name: 'Verify and restore' }).click()
+  await expect(page.getByText('That license is not active for Deal Thread.')).toBeVisible()
+  await page.reload()
+  await expect(page.getByRole('button', { name: 'Unlock PDF casefile' })).toBeVisible()
+  await expect(page.getByText('Casefile unlocked')).toHaveCount(0)
+})
+
+test('390px footer links meet the touch target baseline and keyboard focus remains visible', async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 })
+  await page.goto('/privacy')
+  const targets = await page.locator('footer a').evaluateAll((links) => links.map((link) => {
+    const bounds = link.getBoundingClientRect()
+    return { width: bounds.width, height: bounds.height }
+  }))
+  expect(targets.every(({ width, height }) => width >= 44 && height >= 44)).toBe(true)
+
+  await page.keyboard.press('Tab')
+  await expect(page.locator('.skip-link')).toBeFocused()
+  const outline = await page.locator('.skip-link').evaluate((link) => getComputedStyle(link).outlineWidth)
+  expect(Number.parseFloat(outline)).toBeGreaterThanOrEqual(3)
+})
+
+test('landing, paid dialog, and privacy remain accessible and private', async ({ page }) => {
+  const externalRequests = new Set<string>()
+  page.on('request', (request) => {
+    const url = new URL(request.url())
+    if (url.hostname !== '127.0.0.1') externalRequests.add(url.origin)
+  })
+
+  await page.goto('/')
+  let results = await new AxeBuilder({ page: page as never }).analyze()
+  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([])
+
+  await page.getByRole('button', { name: 'Try a sample' }).click()
+  const trigger = page.getByRole('button', { name: 'Unlock PDF casefile' })
+  await trigger.focus()
+  await trigger.click()
+  await expect(page.getByRole('heading', { name: 'Make the casefile printable' })).toBeVisible()
+  results = await new AxeBuilder({ page: page as never }).analyze()
+  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([])
+  await page.keyboard.press('Escape')
+  await expect(trigger).toBeFocused()
+
+  await page.goto('/privacy')
+  results = await new AxeBuilder({ page: page as never }).analyze()
+  expect(results.violations.filter((item) => ['serious', 'critical'].includes(item.impact ?? ''))).toEqual([])
+  expect([...externalRequests]).toEqual([])
+})
+
+test('desktop and 390px mobile layouts do not overflow', async ({ browser }) => {
+  for (const viewport of [{ width: 1440, height: 1000 }, { width: 390, height: 844 }]) {
+    const context = await browser.newContext({ viewport })
+    const page = await context.newPage()
+    await page.goto('/')
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+    await page.getByRole('button', { name: 'Try a sample' }).click()
+    await expect.poll(() => page.evaluate(() => document.documentElement.scrollWidth <= document.documentElement.clientWidth)).toBe(true)
+    await context.close()
+  }
 })
