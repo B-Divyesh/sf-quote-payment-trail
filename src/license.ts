@@ -50,5 +50,5 @@ export async function verifyLicense(force = false): Promise<boolean> {
     const result = await response.json() as { valid: boolean; reason?: string }
     localStorage.setItem(VERDICT_KEY, JSON.stringify({ valid: result.valid, reason: result.reason, checkedAt: Date.now() } satisfies Verdict))
     return result.valid
-  } catch { return hasOptimisticUnlock() }
+  } catch { return force ? false : hasOptimisticUnlock() }
 }

@@ -29,7 +29,7 @@ Verification completed on 2026-08-28:
 - Playwright 1.58.2: 3/3 passing (creation and persistence, axe serious/critical scan, offline reload, mixed valid/malformed CSV import).
 - Factory `verify-url.sh`: HTTP 200, title present, `lang=en`, exactly one h1, main landmark present, all images have alt text, no unlabeled buttons, zero console/page errors.
 - Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 0.8s, LCP 1.2s, TBT 150ms, CLS 0.
-- Initial app JS: 32.60 KB uncompressed / 11.82 KB gzip; CSS: 16.69 KB / 4.72 KB gzip; responsive hero: 10 KB (640px) or 20 KB (960px). No font download.
+- Initial app JS: 33.19 KB uncompressed / 12.00 KB gzip; CSS: 16.69 KB / 4.72 KB gzip; responsive hero: 10 KB (640px) or 20 KB (960px). No font download.
 - Visual checks at 1440×1000 and 390×844: no horizontal overflow; one h1 and one main; no console errors.
 - `npm audit`: zero known vulnerabilities.
 

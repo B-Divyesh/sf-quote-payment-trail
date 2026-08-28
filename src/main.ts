@@ -262,6 +262,13 @@ function download(name: string, content: string, type: string): void {
 
 function slug(value: string): string { return value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'casefile' }
 
+function isAppData(value: unknown): value is AppData {
+  if (!value || typeof value !== 'object') return false
+  const candidate = value as Partial<AppData>
+  if (candidate.version !== 1 || !Array.isArray(candidate.cases) || !(candidate.activeId === null || typeof candidate.activeId === 'string')) return false
+  return candidate.cases.every((casefile) => casefile && typeof casefile.id === 'string' && typeof casefile.name === 'string' && typeof casefile.customer === 'string' && typeof casefile.currency === 'string' && Array.isArray(casefile.records) && casefile.records.every((record) => record && typeof record.id === 'string' && recordTypes.includes(record.type) && typeof record.reference === 'string' && typeof record.date === 'string' && Number.isFinite(record.amount) && record.amount >= 0 && typeof record.note === 'string' && Array.isArray(record.links) && record.links.every((link) => typeof link === 'string') && record.source && (record.source.kind === 'manual' || record.source.kind === 'csv')))
+}
+
 function exportCsv(casefile: Casefile): void {
   const header = ['type', 'reference', 'date', 'amount', 'note', 'links', 'source']
   const rows = casefile.records.map((record) => [record.type, record.reference, record.date, record.amount.toFixed(2), record.note, record.links.join('; '), record.source.kind === 'csv' ? `${record.source.label} row ${record.source.row}` : record.source.label])
@@ -321,7 +328,7 @@ app.addEventListener('change', async (event) => {
   if (input.id !== 'backup-file' || !input.files?.[0]) return
   try {
     const parsed = JSON.parse(await input.files[0].text()) as AppData
-    if (parsed.version !== 1 || !Array.isArray(parsed.cases)) throw new Error('format')
+    if (!isAppData(parsed)) throw new Error('format')
     if (!confirm(`Import ${parsed.cases.length} casefiles and replace the data currently on this device? Export a backup first if needed.`)) return
     data = parsed; await persist(); render(); announce('JSON backup imported.')
   } catch { announce('That file is not a valid Deal Thread backup.') }
