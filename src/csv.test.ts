@@ -40,4 +40,14 @@ invoice,INV-ZERO,2026-02-28,0,Real zero,Q-100`, 'verifier.csv')
     expect(result.rejected[1]).toMatchObject({ row: 3, raw: 'invoice,INV-BADDATE,2026-02-30,10,Impossible date,Q-100' })
     expect(result.rejected[1].reason).toContain('real calendar date')
   })
+
+  it('holds an unterminated quoted field back instead of importing a corrupted source row', () => {
+    const result = parseImport('type,reference,date,amount,note\ninvoice,INV-UNTERMINATED,2026-08-20,42,"Unclosed note', 'unterminated.csv')
+    expect(result.accepted).toHaveLength(0)
+    expect(result.rejected).toEqual([expect.objectContaining({
+      row: 2,
+      reason: 'CSV has an unterminated quoted field.',
+      raw: 'invoice,INV-UNTERMINATED,2026-08-20,42,"Unclosed note',
+    })])
+  })
 })

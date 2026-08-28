@@ -2,12 +2,13 @@ import './style.css'
 import { loadData, saveData } from './db'
 import { formatMoney, summarize } from './calc'
 import { csvEscape, parseImport, type CsvResult } from './csv'
-import { captureLicense, checkoutUrl, hasOptimisticUnlock, storeLicense, verifyLicense } from './license'
+import { captureLicense, hasOptimisticUnlock, storeLicense, verifyLicense } from './license'
 import type { AppData, Casefile, DealRecord, RecordType } from './types'
 import { recordTypes } from './types'
 
 const app = document.querySelector<HTMLDivElement>('#app')!
-let data: AppData = await loadData()
+const isDemo = () => location.pathname === '/demo' || new URLSearchParams(location.search).get('demo') === '1'
+let data: AppData = await loadData(isDemo())
 let premium = hasOptimisticUnlock()
 let importResult: CsvResult | null = null
 let importFileName = ''
@@ -17,45 +18,56 @@ let dialogReturnFocus: HTMLElement | null = null
 captureLicense()
 premium = hasOptimisticUnlock()
 
+if (isDemo() && data.cases.length === 0) {
+  data = sampleData()
+  await saveData(data, true)
+}
+
 const typeLabels: Record<RecordType, string> = { quote: 'Quote', delivery: 'Delivery', invoice: 'Invoice', credit: 'Credit', payment: 'Payment' }
 const esc = (value: unknown) => String(value ?? '').replace(/[&<>'"]/g, (char) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;' })[char]!)
 const activeCase = () => data.cases.find((item) => item.id === data.activeId) ?? null
 const today = () => new Date().toISOString().slice(0, 10)
 const typeIcon = (type: RecordType) => ({ quote: 'Q', delivery: 'D', invoice: 'I', credit: 'C', payment: 'P' })[type]
+const demoSuffix = () => isDemo() ? '?demo=1' : ''
+const routeHref = (path: string) => `${path}${demoSuffix()}`
+
+function demoBanner(): string {
+  return isDemo() ? `<aside class="demo-banner" aria-label="Demo mode"><strong>Demo — sample data, nothing is saved</strong><span><button class="demo-action" data-action="reset-demo">Reset demo</button><a href="/" data-route>Start for real</a></span></aside>` : ''
+}
 
 function legalPage(kind: 'privacy' | 'terms'): string {
   const privacy = kind === 'privacy'
   return `
-    <header class="site-header compact"><a class="brand" href="/" data-route><span class="brand-mark" aria-hidden="true"></span>Deal Thread</a><a href="/" data-route>Back to workbench</a></header>
+    ${demoBanner()}<header class="site-header compact"><a class="brand" href="${routeHref('/')}" data-route><span class="brand-mark" aria-hidden="true"></span>Deal Thread</a><a href="${routeHref('/')}" data-route>Back to workbench</a></header>
     <main id="main" class="legal"><p class="eyebrow">Plain-language policy</p><h1>${privacy ? 'Privacy' : 'Terms of use'}</h1>
     ${privacy ? `<p class="lede">Your deal records belong to you. Deal Thread stores casefiles in your browser’s IndexedDB and does not send them to us.</p>
       <h2>What stays on your device</h2><p>Customer names, references, dates, amounts, notes, source rows, and links stay in local browser storage. CSV and JSON files are read locally. Exports are created locally.</p>
-      <h2>License checks</h2><p>If you buy or restore the Casefile unlock, the license token is stored in localStorage and sent to the Sociobot billing API only to verify access. Checkout is hosted by Sociobot/Dodo, the merchant of record. We do not receive your card details.</p>
+      <h2>License checks</h2><p>If you restore an existing Casefile license, its token is stored in localStorage and sent to the Sociobot billing API only to verify access. We do not receive card details.</p>
       <h2>Analytics and retention</h2><p>There are no analytics, trackers, advertising cookies, third-party fonts, or runtime scripts. Removing site data in your browser deletes local casefiles and the saved license from that device.</p>` : `<p class="lede">Deal Thread is a record-explanation aid, not accounting, tax, legal, inventory, or payment software.</p>
       <h2>Your responsibility</h2><p>You control the records you enter and must verify them against source documents. Totals are arithmetic summaries, not automated matching claims. Keep your own backups using the JSON export.</p>
-      <h2>One-time Casefile unlock</h2><p>The one-time purchase unlocks print-ready casefiles for this product. Sociobot/Dodo is the merchant of record and handles checkout and refunds. A refund or revoked license removes paid access; CSV and JSON export remain available.</p>
+      <h2>Existing Casefile licenses</h2><p>An existing Casefile license can unlock print-ready casefiles for this product. A revoked license removes paid access. CSV and JSON export remain available.</p>
       <h2>Warranty</h2><p>The software is provided “as is” without warranty. To the extent permitted by law, the authors are not liable for losses arising from use or inability to use it.</p>`}
     <p class="policy-date">Effective 28 August 2026 · Contact: support@sociobot.in</p></main>${footer()}`
 }
 
 function footer(): string {
-  return `<footer><span>Private by default · Works offline</span><span><a href="/privacy" data-route>Privacy</a><a href="/terms" data-route>Terms</a></span><span>Original AI-generated ceramic artwork</span></footer>`
+  return `<footer><span>Private by default · Works offline</span><span><a href="${routeHref('/privacy')}" data-route>Privacy</a><a href="${routeHref('/terms')}" data-route>Terms</a></span><span>Built by Param Factory · original AI-generated ceramic artwork</span></footer>`
 }
 
 function header(): string {
-  return `<header class="site-header">
-    <a class="brand" href="/" data-route aria-label="Deal Thread home"><span class="brand-mark" aria-hidden="true"></span><span>Deal Thread</span></a>
-    <nav aria-label="Primary"><button class="text-button" data-action="show-about">How it works</button><a class="buy-link small" href="${checkoutUrl}">${premium ? 'Casefile unlocked' : 'Unlock casefile · $19'}</a></nav>
+  return `${demoBanner()}<header class="site-header">
+    <a class="brand" href="${routeHref('/')}" data-route aria-label="Deal Thread home"><span class="brand-mark" aria-hidden="true"></span><span>Deal Thread</span></a>
+    <nav aria-label="Primary"><a href="${routeHref('/demo')}" data-route>Demo</a><button class="text-button" data-action="show-about">How it works</button>${premium ? '<span class="license-status">Casefile unlocked</span>' : ''}</nav>
   </header>`
 }
 
 function landing(): string {
   return `${header()}<main id="main">
     <section class="hero">
-      <div class="hero-copy"><p class="eyebrow">Quote → delivery → invoice → credit → payment</p><h1>Every amount,<br><em>one honest thread.</em></h1>
-      <p class="lede">Turn scattered transaction records into a source-linked casefile. Deal Thread shows what happened, what remains, and what still needs your judgment.</p>
-      <div class="hero-actions"><button class="primary" data-action="new-case">Start a casefile</button><button data-action="load-example">Try a sample</button></div>
-      <p class="privacy-note"><span aria-hidden="true">◌</span> Stored only on this device. No account required.</p></div>
+      <div class="hero-copy"><p class="eyebrow">Quote → delivery → invoice → credit → payment</p><h1>Explain each deal<br><em>from quote to payment.</em></h1>
+      <p class="lede">For tiny-business owners who need one clear record of partial deliveries, invoices, credits, and payments.</p>
+      <div class="hero-actions"><button class="primary" data-action="try-demo">Try it with sample data</button><button data-action="new-case">Start a casefile</button></div>
+      <p class="action-note">The sample opens a Riverside shopfit casefile you can change freely.</p><ul class="plain-facts"><li>Stored only on this device</li><li>Works offline after the first visit</li><li>Print casefile access is currently unavailable</li></ul></div>
       <picture class="hero-art"><source media="(max-width: 700px)" srcset="/assets/deal-thread-hero-640.webp"><img src="/assets/deal-thread-hero-960.webp" width="960" height="640" alt="Five pale ceramic document tiles joined by cobalt thread, with one unresolved ochre tile nearby" fetchpriority="high" decoding="async"></picture>
     </section>
     <section class="principles" aria-labelledby="principles-title"><p class="eyebrow">Built for explanation, not automation</p><h2 id="principles-title">A casefile you can defend.</h2><div class="principle-grid">
@@ -95,7 +107,7 @@ function workspace(casefile: Casefile): string {
           ${unresolvedCount ? `<div class="attention"><strong>${unresolvedCount} ${unresolvedCount === 1 ? 'record needs' : 'records need'} a link</strong><p>Open each ochre record and connect it to its source document. Matching amounts alone is not proof.</p></div>` : `<div class="resolved"><strong>All downstream records are linked</strong><p>No missing or unknown document links were found.</p></div>`}
           <dl class="math"><div><dt>Invoices</dt><dd>${formatMoney(summary.invoiced, casefile.currency)}</dd></div><div><dt>minus credits</dt><dd>− ${formatMoney(summary.credited, casefile.currency)}</dd></div><div><dt>minus payments</dt><dd>− ${formatMoney(summary.paid, casefile.currency)}</dd></div><div class="math-total"><dt>Still open</dt><dd>${formatMoney(summary.outstanding, casefile.currency)}</dd></div></dl>
           <p class="source-note">Calculated directly from ${casefile.records.length} visible source ${casefile.records.length === 1 ? 'record' : 'records'}.</p>
-          <div class="export-block"><h3>Take the casefile with you</h3><button data-action="export-csv">Export records as CSV</button><button data-action="export-json">Export JSON backup</button><button class="casefile-button" data-action="print-casefile">${premium ? 'Print / save PDF casefile' : 'Unlock PDF casefile'}</button><p>${premium ? 'Your one-time unlock is active.' : 'One-time $19 unlock. CSV and JSON stay free.'}</p></div>
+          <div class="export-block"><h3>Take the casefile with you</h3><button data-action="export-csv">Export records as CSV</button><button data-action="export-json">Export JSON backup</button><button class="casefile-button" data-action="print-casefile">${premium ? 'Print / save PDF casefile' : 'Restore casefile license'}</button><p>${premium ? 'Your Casefile license is active.' : 'CSV and JSON exports are free. Printing is available with an existing Casefile license.'}</p></div>
         </aside>
       </div>
     </section>
@@ -119,11 +131,35 @@ function emptyRecords(): string {
   return `<div class="empty-records"><span class="empty-knot" aria-hidden="true"></span><h3>The thread is ready.</h3><p>Add the quote first, or import a CSV with several records at once.</p><div><button class="primary" data-action="add-record">Add first record</button><button data-action="import-csv">Import CSV</button></div></div>`
 }
 
-function render(): void {
+function setRouteMetadata(path: string): void {
+  const info = path === '/privacy' ? ['Privacy — Deal Thread', 'How Deal Thread stores private casefiles.']
+    : path === '/terms' ? ['Terms — Deal Thread', 'Terms for the Deal Thread casefile builder.']
+      : path === '/demo' || isDemo() ? ['Demo — Deal Thread', 'Try Deal Thread with isolated sample data.']
+        : path !== '/' ? ['Page not found — Deal Thread', 'Return to Deal Thread.']
+          : ['Deal Thread — explain each deal', 'Trace a quote through deliveries, invoices, credits and payments in one private, explainable thread.']
+  document.title = info[0]
+  document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', info[1])
+  document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', info[0])
+  document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', info[1])
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:title"]')?.setAttribute('content', info[0])
+  document.querySelector<HTMLMetaElement>('meta[name="twitter:description"]')?.setAttribute('content', info[1])
+}
+
+function notFound(): string {
+  return `${header()}<main id="main" class="legal not-found"><p class="eyebrow">404</p><h1>That page is not in this casefile.</h1><p class="lede">Return to your workbench or open the isolated sample data.</p><p><a class="button-link primary" href="${routeHref('/')}" data-route>Back to Deal Thread</a></p></main>${footer()}`
+}
+
+function render(moveFocus = false): void {
   const path = location.pathname.replace(/\/$/, '')
   if (path === '/privacy' || path === '/terms') app.innerHTML = legalPage(path.slice(1) as 'privacy' | 'terms')
-  else app.innerHTML = activeCase() ? workspace(activeCase()!) : landing()
+  else if (path === '' || path === '/' || path === '/demo') app.innerHTML = activeCase() ? workspace(activeCase()!) : landing()
+  else app.innerHTML = notFound()
+  setRouteMetadata(path === '' ? '/' : path)
   updateNetworkStatus()
+  if (moveFocus) queueMicrotask(() => {
+    const heading = app.querySelector<HTMLElement>('h1')
+    if (heading) { heading.tabIndex = -1; heading.focus(); announce(`${heading.textContent?.trim() ?? 'Page'} page loaded.`) }
+  })
 }
 
 function showDialog(content: string, className = ''): HTMLDialogElement {
@@ -243,7 +279,7 @@ function aboutDialog(): void {
 }
 
 function payDialog(): void {
-  showDialog(`<div class="dialog-heading"><div><p class="eyebrow">One-time unlock</p><h2>Make the casefile printable</h2></div><button class="close-button" data-action="close-dialog" aria-label="Close">×</button></div><p class="lede small-lede">For $19 once, turn any thread into a polished print/PDF casefile with its arithmetic, links, notes, and source trail.</p><ul class="unlock-list"><li>All current and future casefiles</li><li>No subscription or account</li><li>Free CSV and JSON exports stay free</li></ul><a class="primary button-link" href="${checkoutUrl}">Buy the $19 unlock</a><hr><form id="license-form"><label>Have a license token?<input name="license" required autocomplete="off"></label><p class="form-error" role="alert"></p><button>Verify and restore</button></form><p class="fine-print">Checkout and refunds are handled by Sociobot/Dodo, the merchant of record. See <a href="/terms" data-route>terms</a> and <a href="/privacy" data-route>privacy</a>.</p>`)
+  showDialog(`<div class="dialog-heading"><div><p class="eyebrow">Existing license</p><h2>Restore casefile printing</h2></div><button class="close-button" data-action="close-dialog" aria-label="Close">×</button></div><p class="lede small-lede">CSV and JSON exports are available to everyone. Paste an existing Casefile license to restore print/PDF access on this device.</p><form id="license-form"><label>Casefile license token<input name="license" required autocomplete="off"></label><p class="form-error" role="alert"></p><button class="primary">Verify and restore</button></form><p class="fine-print">See <a href="${routeHref('/terms')}" data-route>terms</a> and <a href="${routeHref('/privacy')}" data-route>privacy</a>.</p>`)
   document.querySelector<HTMLFormElement>('#license-form')!.addEventListener('submit', async (event) => {
     event.preventDefault(); const form = event.currentTarget as HTMLFormElement; const fields = new FormData(form); storeLicense(String(fields.get('license') ?? '')); const error = form.querySelector<HTMLElement>('.form-error')!; error.textContent = 'Checking license…'
     const valid = await verifyLicense(true)
@@ -252,7 +288,7 @@ function payDialog(): void {
 }
 
 async function persist(): Promise<void> {
-  try { await saveData(data) }
+  try { await saveData(data, isDemo()) }
   catch { announce('This browser could not save the latest change. Export a backup and check available storage.') }
 }
 
@@ -297,7 +333,7 @@ function updateNetworkStatus(): void {
 document.addEventListener('click', async (event) => {
   const target = (event.target as HTMLElement).closest<HTMLElement>('[data-action], [data-route]')
   if (!target) return
-  if (target.hasAttribute('data-route')) { event.preventDefault(); closeDialog(); history.pushState({}, '', (target as HTMLAnchorElement).href); render(); scrollTo(0, 0); return }
+  if (target.hasAttribute('data-route')) { event.preventDefault(); closeDialog(); history.pushState({}, '', (target as HTMLAnchorElement).href); data = await loadData(isDemo()); render(true); scrollTo(0, 0); return }
   const action = target.dataset.action
   if (action === 'new-case') caseDialog()
   else if (action === 'edit-case') caseDialog(activeCase()!)
@@ -307,7 +343,9 @@ document.addEventListener('click', async (event) => {
   else if (action === 'import-csv') importDialog()
   else if (action === 'close-dialog') closeDialog(target.closest('dialog'))
   else if (action === 'switch-case') { data.activeId = target.dataset.id ?? null; await persist(); render() }
+  else if (action === 'try-demo') { history.pushState({}, '', '/demo'); data = await loadData(true); if (!data.cases.length) { data = sampleData(); await saveData(data, true) }; render(true) }
   else if (action === 'load-example') await loadExample()
+  else if (action === 'reset-demo') { data = sampleData(); await saveData(data, true); render(); announce('Demo reset to the original sample data.') }
   else if (action === 'export-csv') exportCsv(activeCase()!)
   else if (action === 'export-json') download(`deal-thread-backup-${new Date().toISOString().slice(0, 10)}.json`, JSON.stringify(data, null, 2), 'application/json')
   else if (action === 'print-casefile') {
@@ -349,7 +387,7 @@ async function deleteCase(): Promise<void> {
   data.cases = data.cases.filter((entry) => entry.id !== item.id); data.activeId = data.cases[0]?.id ?? null; await persist(); closeDialog(); render()
 }
 
-async function loadExample(): Promise<void> {
+function sampleData(): AppData {
   const now = new Date().toISOString(); const id = crypto.randomUUID()
   const records: DealRecord[] = [
     ['quote', 'QUO-204', '2026-07-02', 4800, [], 'Original counter and shelving quote.'],
@@ -358,10 +396,14 @@ async function loadExample(): Promise<void> {
     ['payment', 'PAY-882', '2026-07-25', 1800, ['INV-318'], 'Bank transfer received.'],
     ['credit', 'CR-044', '2026-08-03', 250, [], 'Shelf returned; the invoice link still needs confirming.'],
   ].map(([type, reference, date, amount, links, note]) => ({ id: crypto.randomUUID(), type: type as RecordType, reference: String(reference), date: String(date), amount: Number(amount), links: links as string[], note: String(note), source: { kind: 'manual', label: 'Sample record' }, createdAt: now, updatedAt: now }))
-  data.cases.push({ id, name: 'Riverside shopfit', customer: 'Riverside Provisions', currency: 'USD', records, createdAt: now, updatedAt: now }); data.activeId = id; await persist(); render(); announce('Sample casefile added. Edit or delete it freely.')
+  return { version: 1, cases: [{ id, name: 'Riverside shopfit', customer: 'Riverside Provisions', currency: 'USD', records, createdAt: now, updatedAt: now }], activeId: id }
 }
 
-window.addEventListener('popstate', render)
+async function loadExample(): Promise<void> {
+  data = sampleData(); await persist(); render(); announce(isDemo() ? 'Demo reset to the original sample data.' : 'Sample casefile added. Edit or delete it freely.')
+}
+
+window.addEventListener('popstate', () => { loadData(isDemo()).then((stored) => { data = stored; render(true) }) })
 window.addEventListener('online', updateNetworkStatus)
 window.addEventListener('offline', updateNetworkStatus)
 

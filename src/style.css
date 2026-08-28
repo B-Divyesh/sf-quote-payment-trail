@@ -43,6 +43,7 @@ em { color: var(--cobalt); font-weight: 400; }
 .brand-mark { width: 31px; height: 23px; position: relative; display: inline-block; border: 2px solid var(--cobalt); border-radius: 7px 10px 8px 6px; transform: rotate(-2deg); background: var(--porcelain); box-shadow: 0 5px 12px rgba(49, 91, 117, .1); }
 .brand-mark::after { content: ""; position: absolute; left: 13px; bottom: -8px; height: 9px; border-left: 2px solid var(--cobalt); }
 nav { display: flex; align-items: center; gap: .7rem; }
+nav > a { display: inline-flex; min-height: 44px; align-items: center; }
 .text-button { border-color: transparent; background: transparent; }
 .buy-link { display: inline-flex; align-items: center; min-height: 44px; padding: .55rem 1rem; color: var(--porcelain); border-radius: 999px; background: var(--cobalt-deep); font-weight: 700; text-decoration: none; }
 .hero { max-width: 1440px; min-height: calc(100vh - 76px); margin: 0 auto; padding: clamp(36px, 6vw, 88px) clamp(18px, 4vw, 56px) 90px; display: grid; grid-template-columns: minmax(320px, .82fr) minmax(420px, 1.18fr); align-items: center; gap: clamp(28px, 5vw, 86px); overflow: hidden; }
@@ -53,6 +54,10 @@ nav { display: flex; align-items: center; gap: .7rem; }
 .primary { color: white; border-color: var(--cobalt-deep); background: var(--cobalt-deep); }
 .primary:hover { color: white; background: var(--cobalt); }
 .privacy-note { color: var(--shale); font-size: .88rem; }
+.action-note { margin: -0.55rem 0 1.15rem; color: var(--shale); font-size: .88rem; }
+.plain-facts { display: grid; gap: 5px; margin: 0; padding: 0; color: var(--shale); font-size: .88rem; list-style: none; }
+.plain-facts li::before { content: "◌"; margin-right: .5rem; color: var(--cobalt); }
+.license-status { display: inline-flex; min-height: 44px; align-items: center; color: var(--moss); font-size: .86rem; font-weight: 800; }
 .hero-art { position: relative; display: block; }
 .hero-art::before { content: ""; position: absolute; inset: 9% -7% -8% 11%; z-index: -1; border-radius: 45% 52% 38% 55%; background: rgba(207, 221, 215, .5); filter: blur(20px); }
 .hero-art img { display: block; width: min(100%, 820px); height: auto; border-radius: 44% 36% 42% 31% / 22% 25% 19% 30%; box-shadow: 0 28px 70px rgba(41, 72, 66, .12); transform: rotate(.6deg); }
@@ -168,6 +173,11 @@ dialog hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rim); }
 .undo-toast { display: flex; align-items: center; gap: 18px; }
 .undo-toast button { color: white; border-color: #829a94; background: transparent; }
 .offline-banner { position: sticky; z-index: 900; top: 0; padding: 7px 16px; color: #fff; background: var(--cobalt-deep); text-align: center; font-size: .82rem; font-weight: 700; }
+.demo-banner { position: sticky; z-index: 901; top: 0; min-height: 44px; padding: 6px clamp(18px, 4vw, 56px); display: flex; align-items: center; justify-content: space-between; gap: 12px; color: #17322b; background: #e7f0eb; border-bottom: 1px solid #a8c5b2; font-size: .84rem; }
+.demo-banner > span { display: flex; align-items: center; gap: 12px; }
+.demo-banner a, .demo-action { min-height: 32px; padding: .2rem .45rem; color: var(--cobalt-deep); border: 0; border-radius: 4px; background: transparent; font-size: inherit; font-weight: 800; text-decoration: underline; text-underline-offset: 3px; }
+.not-found { text-align: center; }
+.not-found .button-link { width: fit-content; min-width: 210px; margin: 28px auto; }
 .legal { max-width: 760px; min-height: calc(100vh - 160px); margin: 0 auto; padding: 70px 22px 100px; }
 .legal h1 { font-size: clamp(2.8rem, 7vw, 4.8rem); }
 .legal h2 { margin-top: 42px; font-size: 1.7rem; }
@@ -190,6 +200,7 @@ dialog hr { margin: 26px 0; border: 0; border-top: 1px solid var(--rim); }
   .site-header { min-height: 68px; }
   .text-button { display: none; }
   .buy-link.small { padding: .5rem .75rem; font-size: .76rem; }
+  .demo-banner { align-items: flex-start; flex-direction: column; }
   .hero { min-height: 0; padding-top: 50px; grid-template-columns: 1fr; }
   .hero-art { order: -1; margin: 0 -7vw; }
   .hero-art img { border-radius: 28% 23% 26% 20% / 18% 20% 17% 23%; }

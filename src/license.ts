@@ -6,8 +6,6 @@ const DAY = 86_400_000
 
 interface Verdict { valid: boolean; checkedAt: number; token: string; reason?: string }
 
-export const checkoutUrl = `${API}/products/${SLUG}/checkout`
-
 export function captureLicense(): string | null {
   const url = new URL(location.href)
   const token = url.searchParams.get('license')

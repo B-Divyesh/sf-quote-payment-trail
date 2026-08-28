@@ -1,0 +1,65 @@
+[
+  {
+    "id": "source-provenance",
+    "claim": "Sources stay attached",
+    "where": "landing explanation",
+    "test": "npm run test:e2e -- --grep @claim:source-provenance",
+    "sandbox": "Import a CSV row from /demo, open it, and assert the source filename and source row remain visible."
+  },
+  {
+    "id": "ambiguity-visible",
+    "claim": "Ambiguity stays visible",
+    "where": "landing explanation",
+    "test": "npm run test:e2e -- --grep @claim:ambiguity-visible",
+    "sandbox": "Open /demo and assert the intentionally unlinked sample credit is labelled as needing a link."
+  },
+  {
+    "id": "casefile-workflow",
+    "claim": "Creates and edits casefiles in IndexedDB",
+    "where": "README",
+    "test": "npm run test:e2e -- --grep @claim:casefile-workflow",
+    "sandbox": "Create a casefile and a record from a fresh browser context, then assert the saved record is shown."
+  },
+  {
+    "id": "offline-reload",
+    "claim": "Works offline after the first visit",
+    "where": "landing facts, README",
+    "test": "npm run test:e2e -- --grep @claim:offline-reload",
+    "sandbox": "Open /demo, wait for the service worker cache, set the browser context offline, then reload the sample casefile."
+  },
+  {
+    "id": "demo-isolated",
+    "claim": "Demo — sample data, nothing is saved",
+    "where": "/demo banner, landing action, README",
+    "test": "npm run test:e2e -- --grep @claim:demo-isolated",
+    "sandbox": "Create a real casefile, open /demo, assert the sample is separate, reset it, then return to the real casefile."
+  },
+  {
+    "id": "local-only",
+    "claim": "Stored only on this device",
+    "where": "landing facts, Privacy, README",
+    "test": "npm run test:e2e -- --grep @claim:local-only",
+    "sandbox": "Exercise /demo while recording requests; assert no third-party origin is contacted and inspect the isolated data flow."
+  },
+  {
+    "id": "csv-malformed-held",
+    "claim": "Malformed rows will be held back for review",
+    "where": "CSV import dialog, README",
+    "test": "npm run test:e2e -- --grep @claim:csv-malformed-held",
+    "sandbox": "Import malformed financial rows from /demo and assert zero accepted records and held-back reasons."
+  },
+  {
+    "id": "csv-export",
+    "claim": "Exports records as CSV",
+    "where": "casefile export control, README",
+    "test": "npm run test:e2e -- --grep @claim:csv-export",
+    "sandbox": "Open /demo, download CSV, and assert the header plus one row for every sample record."
+  },
+  {
+    "id": "json-export",
+    "claim": "Exports a JSON backup",
+    "where": "casefile export control, README",
+    "test": "npm run test:e2e -- --grep @claim:json-export",
+    "sandbox": "Open /demo, download the backup, and assert it contains the sample casefile and records."
+  }
+]
