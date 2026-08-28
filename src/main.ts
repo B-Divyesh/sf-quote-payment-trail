@@ -138,6 +138,7 @@ function setRouteMetadata(path: string): void {
         : path !== '/' ? ['Page not found — Deal Thread', 'Return to Deal Thread.']
           : ['Deal Thread — explain each deal', 'Trace a quote through deliveries, invoices, credits and payments in one private, explainable thread.']
   document.title = info[0]
+  document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.setAttribute('href', `https://quote-payment-trail.sociobot.in${path === '' ? '/' : path}`)
   document.querySelector<HTMLMetaElement>('meta[name="description"]')?.setAttribute('content', info[1])
   document.querySelector<HTMLMetaElement>('meta[property="og:title"]')?.setAttribute('content', info[0])
   document.querySelector<HTMLMetaElement>('meta[property="og:description"]')?.setAttribute('content', info[1])
