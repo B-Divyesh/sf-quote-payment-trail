@@ -10,6 +10,7 @@ Repaired against independent verifier report `12330f27fc0adaf8653ba29518d92c738b
 - CSV parsing now holds an unterminated quoted field back rather than importing a corrupted source row. This is covered in `src/csv.test.ts` and an end-to-end import test using the verifier’s exact row.
 - Route changes now focus the destination `h1` and announce it. `/privacy`, `/terms`, `/demo`, and unknown routes set route-specific titles and metadata. Unknown routes render a styled casefile 404; `public/404.html` and Static Web Apps 404 override cover server-level misses. Canonical, Open Graph, Twitter, apple-touch, sitemap, and a 1200×630 derived social image are included.
 - The real/demonstration handoff check exposed a save timing race: IndexedDB persistence now waits for transaction completion before a route can read it.
+- Bumped the service-worker shell cache to V5 so clients move off the pre-repair V4 app shell on update.
 - Production checkout for `quote-payment-trail` still returned `404 {"error":"enabled factory product","status":404}` at 10:04 UTC. The static repository cannot register the shared billing product. To avoid advertising an unusable purchase, the $19 checkout links and price claims are removed. Existing-license restoration and verification remain available; CSV/JSON ownership exports remain free. Re-enable the registered Sociobot checkout and restore the paid-tier copy only after `GET /products/quote-payment-trail/checkout` redirects successfully.
 
 ## Verification

@@ -1,4 +1,4 @@
-const CACHE = 'deal-thread-shell-v4'
+const CACHE = 'deal-thread-shell-v5'
 const SHELL = ['/', '/index.html', '/offline.html', '/manifest.webmanifest', '/icon-192.png', '/icon-512.png', '/assets/deal-thread-hero-640.webp', '/assets/deal-thread-hero-960.webp', '__BUILD_ASSETS__']
 self.addEventListener('install', (event) => event.waitUntil((async () => {
   const cache = await caches.open(CACHE)

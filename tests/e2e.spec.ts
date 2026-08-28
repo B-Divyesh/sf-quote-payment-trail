@@ -21,7 +21,7 @@ test('@claim:offline-reload works offline after the first visit', async ({ page,
   await page.goto('/demo')
   await page.waitForFunction(() => Boolean(navigator.serviceWorker?.controller))
   await page.waitForFunction(async () => {
-    const cache = await caches.open('deal-thread-shell-v4')
+    const cache = await caches.open('deal-thread-shell-v5')
     return (await cache.keys()).some((request) => request.url.endsWith('.js'))
   })
   await expect(page.getByRole('heading', { name: 'Riverside shopfit' })).toBeVisible()
