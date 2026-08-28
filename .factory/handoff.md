@@ -1,40 +1,29 @@
-# Deal Thread v1 handoff
+# Deal Thread independent verification handoff
 
-## Shipped
+## Verdict: FAIL
 
-- A responsive vanilla TypeScript PWA for maintaining multiple quote-to-payment casefiles entirely in IndexedDB.
-- Manual create/edit/delete flows for quotes, deliveries, invoices, credits, and payments, including explicit reference links, source notes, confirmation, and record deletion undo.
-- Tolerant CSV import with quoted-field support, header aliases, per-row validation, duplicate-reference protection, staged accepted/rejected counts, and downloadable rejected rows.
-- Explainable totals for quoted, invoiced, credited, paid, and still-open values. Missing and unknown links stay visibly unresolved; matching amounts are never inferred as links.
-- Free CSV and full JSON backup export/import. JSON restore explicitly confirms replacement.
-- One-time $19 Casefile unlock using the Sociobot checkout and verification contract, including callback token capture, daily verdict cache, optimistic offline access, invalid/revoked handling, and paste-to-restore. The paid feature is browser print/save-to-PDF; data portability remains free.
-- Installable offline app shell with 192/512/maskable icons, a versioned service-worker cache, an update-ready notice, and verified offline reload of saved IndexedDB data.
-- Dedicated `/privacy` and `/terms` routes plus physical static-build fallbacks.
-- Original ceramic evidence-chain artwork generated for this product and documented with prompt/provenance in `.factory/design.md`.
+Candidate `c1660bbe8c0f1451fb33df66163fa16409a99a3f` was independently verified on 2026-08-28 against `https://quote-payment-trail.sociobot.in`. The deployment matches the candidate build byte-for-byte, but it is not release-ready.
 
-## Run and verify
+Acceptance blockers:
+
+- Malformed CSV accepts a blank amount as zero and `2026-02-30` as a record rendered as 2 March.
+- A never-verified arbitrary token unlocks paid PDF after failed verification followed by offline reload.
+- The production $19 checkout returns HTTP 404 (`{"error":"enabled factory product","status":404}`).
+- A 120-request burst to product verification returned 120× HTTP 200; no 429 or `Retry-After` was observed.
+
+Additional findings: content-hashed assets receive 30-second revalidating caching; CSP/Permissions/frame restrictions are absent; the manifest has a generic MIME type; and mobile footer links miss the 44 px target baseline.
+
+Passing evidence: clean install; 5/5 unit tests; TypeScript and exact production build; 3/3 repository browser tests; zero dependency vulnerabilities; zero serious/critical axe findings across four states; keyboard focus/return; no desktop or 390 px overflow; offline persistence/reload; working SW update notification; no normal-flow third-party requests or console/page errors; Lighthouse mobile 93/100/100/100 with LCP 1.0 s and CLS 0.
+
+Full commands, hashes, reproductions, severities, and evidence are in [verification.md](verification.md).
+
+## Re-run
 
 ```sh
 npm ci
 npm test
 npm run build
-npm run test:e2e
+PLAYWRIGHT_BROWSERS_PATH="$PLAYWRIGHT_BROWSERS_PATH" npm run test:e2e
 ```
 
-`npm run build` is the deploy command. It produces `dist/index.html`, inlines the small critical JS/CSS into that shell for reliable first-load caching, and also emits `dist/privacy/index.html` and `dist/terms/index.html`.
-
-Verification completed on 2026-08-28:
-
-- Unit: 5/5 passing (CSV parsing/validation and case arithmetic/link diagnostics).
-- Playwright 1.58.2: 3/3 passing (creation and persistence, axe serious/critical scan, offline reload, mixed valid/malformed CSV import).
-- Factory `verify-url.sh`: HTTP 200, title present, `lang=en`, exactly one h1, main landmark present, all images have alt text, no unlabeled buttons, zero console/page errors.
-- Lighthouse mobile: Performance 99, Accessibility 100, Best Practices 100, SEO 100; FCP 0.8s, LCP 1.2s, TBT 150ms, CLS 0.
-- Initial app JS: 33.19 KB uncompressed / 12.00 KB gzip; CSS: 16.69 KB / 4.72 KB gzip; responsive hero: 10 KB (640px) or 20 KB (960px). No font download.
-- Visual checks at 1440×1000 and 390×844: no horizontal overflow; one h1 and one main; no console errors.
-- `npm audit`: zero known vulnerabilities.
-
-## Known boundaries / next steps
-
-- “PDF export” intentionally uses the browser’s print/save-to-PDF facility, so pagination and the final destination remain under the user’s control.
-- The production billing endpoint is wired by slug, but checkout depends on the factory registering `quote-payment-trail` and configuring its return URL.
-- There is intentionally no accounting sync, inventory state, payment initiation, or automatic matching. A future version could add optional import mapping for nonstandard CSV headings while preserving review-before-import.
+After fixes and deployment, repeat the malformed-import, offline-license, checkout, rate-limit, cache/header, mobile, axe, Lighthouse, and offline/SW-update checks from `.factory/verification.md`.
