@@ -1,0 +1,9 @@
+{
+  "slug": "quote-payment-trail",
+  "title": "Deal Thread",
+  "user": "A tiny business owner who needs to explain a quote's path through partial delivery, invoice, credit, and payment without clicking through several systems.",
+  "smallest_useful_product": "A local graph/timeline tool that accepts CSV or manual entries for quote, invoice, payment, credit, and delivery; it flags unlinked amounts and exports a single PDF casefile.",
+  "artifact_class": "pwa-offline",
+  "monetization": "one-time",
+  "constraints": "Imports must tolerate malformed CSV; calculations must show source rows and never silently reconcile ambiguous sums; keep all transaction data on device by default."
+}
