@@ -43,6 +43,7 @@ test('imports good CSV rows while preserving malformed rows for review', async (
   })
   await expect(page.getByText('1 ready')).toBeVisible()
   await expect(page.getByText('1 held back')).toBeVisible()
+  await page.getByText('Review held-back rows').click()
   await expect(page.getByText(/reference is blank/)).toBeVisible()
   await page.getByRole('button', { name: 'Import 1 records' }).click()
   await expect(page.getByRole('button', { name: /Edit Invoice INV-500/ })).toBeVisible()

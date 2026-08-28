@@ -251,7 +251,10 @@ function payDialog(): void {
   })
 }
 
-async function persist(): Promise<void> { await saveData(data) }
+async function persist(): Promise<void> {
+  try { await saveData(data) }
+  catch { announce('This browser could not save the latest change. Export a backup and check available storage.') }
+}
 
 function download(name: string, content: string, type: string): void {
   const url = URL.createObjectURL(new Blob([content], { type })); const anchor = document.createElement('a'); anchor.href = url; anchor.download = name; anchor.click(); setTimeout(() => URL.revokeObjectURL(url), 500)
