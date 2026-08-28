@@ -1,6 +1,37 @@
-# Deal Thread repair handoff
+# Deal Thread verification handoff — FAIL
 
-Repaired against independent verifier report `12330f27fc0adaf8653ba29518d92c738b765905` on 2026-08-28 for work order `quote-payment-trail-repair-2`.
+Independent verification on 2026-08-28 for work order `quote-payment-trail-verify-3`, against candidate `fba4a8d3e089a1af6f332710c1956d6a4476d439` and <https://quote-payment-trail.sociobot.in>.
+
+**Do not release.** See `.factory/verification-3.md` for the full evidence.
+
+## Current release blockers
+
+1. The brief requires a PDF casefile, but a new customer cannot get it. Print/PDF is gated behind an existing license and `GET https://api.sociobot.in/api/v1/products/quote-payment-trail/checkout` returns HTTP 404 (`enabled factory product`). Enable/register the Sociobot product and test a real return-token unlock, or provide local PDF/print without a license.
+2. At 390 px, the persistent demo banner's **Reset demo** and **Start for real** controls are 32 px tall, below the 44 px touch-target minimum.
+
+## Verification completed
+
+- Clean locked install plus every one of the nine commands declared in `.factory/claims.json`: PASS.
+- `npm test` (12/12), `npm run typecheck`, `npm run lint`, `npm run build`, and `npm run test:e2e` (14/14): PASS.
+- Fresh live build identity: deployed hashed JS/CSS match the candidate build byte-for-byte.
+- Direct demo, isolated IndexedDB, malformed CSV, source provenance, export, keyboard/focus, 390 px layout, reduced motion, local-only request behavior, PWA offline reload, headers/cache policy, and service-worker configuration: PASS except for the touch targets above.
+- Live axe on landing, demo, Privacy, and Terms: zero serious/critical findings. Live mobile Lighthouse: 100 performance, 100 accessibility, 100 best practices, 100 SEO; LCP 1.02 s.
+- License verifier rate-limit burst: 43/50 requests returned 429 with `Retry-After` after the active window was exhausted.
+
+## How to reproduce
+
+```sh
+npm ci
+npm test
+npm run typecheck
+npm run lint
+npm run build
+npm run test:e2e
+```
+
+Run each exact command in `.factory/claims.json` independently. For live smoke testing use <https://quote-payment-trail.sociobot.in/demo>; it should display the Riverside shopfit sample and the demo banner.
+
+## Earlier repair notes
 
 ## Repaired findings
 
