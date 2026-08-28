@@ -139,11 +139,15 @@ test('@claim:local-only demo data stays on this device without third-party reque
   expect([...externalRequests]).toEqual([])
 })
 
-test('@claim:demo-isolated sample data is direct, resettable, and separate from real data', async ({ page }) => {
+test('@claim:demo-isolated sample data is direct, resettable, and separate from real data', async ({ browser }) => {
+  const context = await browser.newContext({ serviceWorkers: 'block' })
+  const page = await context.newPage()
   await page.goto('/')
   await page.getByRole('button', { name: 'Start a casefile' }).click()
   await page.getByLabel('Case name').fill('Real data only')
   await page.getByRole('button', { name: 'Create casefile' }).click()
+  await page.reload()
+  await expect(page.getByRole('heading', { name: 'Real data only' })).toBeVisible()
   await page.goto('/demo')
   await expect(page.getByText('Demo — sample data, nothing is saved')).toBeVisible()
   await expect(page.getByRole('heading', { name: 'Riverside shopfit' })).toBeVisible()
@@ -152,6 +156,7 @@ test('@claim:demo-isolated sample data is direct, resettable, and separate from 
   await expect(page.getByRole('heading', { name: 'Riverside shopfit' })).toBeVisible()
   await page.getByRole('link', { name: 'Start for real' }).click()
   await expect(page.getByRole('heading', { name: 'Real data only' })).toBeVisible()
+  await context.close()
 })
 
 test('@claim:csv-export exports one source row per record', async ({ page }) => {
